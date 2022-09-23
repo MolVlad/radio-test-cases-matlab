@@ -1,39 +1,29 @@
 clc
 clear
+close all
 addpath quadriga_src/
 
+% Параметры общие для всех методов
+simulationParams.horizontalElementsCount = 8;
+simulationParams.verticalElementsCount = 8;
+simulationParams.nUsers = 8;
+simulationParams.radAllocationMatrix = [];
+simulationParams.seed = 1;
+
 % Блок 1 входных параметров для расчета
-        simulationParams1.horizontalElementsCount = 8;
-        simulationParams1.verticalElementsCount = 8;
-        simulationParams1.nUsers = 8;
-        simulationParams1.beamformerMethod = 'MRT';
-        simulationParams1.radAllocationMatrix = [];
+simulationParams.beamformerMethod = 'MRT';
+
 % Запуск конструктора класса 1
-beamformerObject1 = Beamformer(simulationParams1);
-% Расчет канальных коэффициентов
-beamformerObject1.calcChannelRealization
-% Расчет матриц прекодирования
-beamformerObject1.calcBeamformerWeights
-% Расчет спектральной эффективности
-beamformerObject1.calcSpectralPerformance
+beamformerObjectMrt = Beamformer(simulationParams);
 
 % Блок 2 входных параметров для расчета
-        simulationParams2.horizontalElementsCount = 8;
-        simulationParams2.verticalElementsCount = 8;
-        simulationParams2.nUsers = 8;
-        simulationParams2.beamformerMethod = 'ZF';
-        simulationParams2.radAllocationMatrix = [];
+simulationParams.beamformerMethod = 'ZF';
+
 % Запуск конструктора класса 2
-beamformerObject2 = Beamformer(simulationParams2);
-% Расчет канальных коэффициентов
-beamformerObject2.calcChannelRealization
-% Расчет матриц прекодирования
-beamformerObject2.calcBeamformerWeights
-% Расчет спектральной эффективности
-beamformerObject2.calcSpectralPerformance
+beamformerObjectZf = Beamformer(simulationParams);
 
 % Создание массива объектов из разных блоков входных параметров
-beamformerObjects = [beamformerObject1, beamformerObject2];
+beamformerObjectList = [beamformerObjectMrt, beamformerObjectZf];
 
 % Вывод зависимостей спектральной эффективности от ОСШ
-beamformerObjects.vuzailizeSpectralPerformance
+beamformerObjectList.vuzailizeSpectralPerformance();

@@ -43,15 +43,21 @@ classdef Beamformer < handle
             this.beamformerMethod = simulationParams.beamformerMethod;
             this.allocationMatrix = simulationParams.radAllocationMatrix;
 
+            if isfield(simulationParams, 'seed')
+                rng(simulationParams.seed);
+            else
+                rng(1);
+            end
+            
             % Генерация канальных коэффициентов
-            this.calcChannelRealization;
+            this.calcChannelRealization();
 
             % Расчет матриц прекодирования
-            this.calcBeamformerWeights;
+            this.calcBeamformerWeights();
 
             % Расчет спектральной эффективности радиопередачи с учетом
             % матрицы прекодирования
-            this.calcSpectralPerformance;
+            this.calcSpectralPerformance();
         end
 
         function calcChannelRealization(this)
@@ -60,12 +66,12 @@ classdef Beamformer < handle
             % матрица [nUsers x (horizontalElementsCount x verticalElementsCount)]
 
             % Симуляционный объект
-            s = qd_simulation_parameters;
+            s = qd_simulation_parameters();
             % Частота на которой генерируются канальные коэффициенты [11.7 ГГц]
             s.center_frequency = 11.7e9;
             % Выключаем строку выполнения
             s.show_progress_bars = 0;
-            % Объект распположения
+            % Объект расположения
             layout = qd_layout(s);
             % Расположим антенну на КА на высоте 500 км
             layout.tx_position = [0 0 500e3]';
@@ -91,7 +97,7 @@ classdef Beamformer < handle
             % Поляризационный режим
             polInd = 1;
             % Межэлементное расстояние (пол длины волны)
-            elementSpacing = 0.5;
+            elementSpacingLambda = 0.5;
             % Количество панелей
             verticalPanels = 1;
             horizontalPanels = 1;
@@ -101,7 +107,7 @@ classdef Beamformer < handle
             % Передающая антенна КА
             satTransmitAnt = qd_arrayant('3gpp-nr', this.horizontalElementsCount,...
                 this.verticalElementsCount,...
-                s.center_frequency, polInd, 0, elementSpacing, verticalPanels,...
+                s.center_frequency, polInd, 0, elementSpacingLambda, verticalPanels,...
                 horizontalPanels, vertPanSpacing, horizPanSpacing);
             % Приемные антенны пользователей
             ueReceiveAnt = qd_arrayant('parabolic', 0.3,  s.center_frequency,...
@@ -118,11 +124,10 @@ classdef Beamformer < handle
             % Сырые канальные коэффициенты
             rawChannelCoeffs = transpose(...
                 reshape([ c.coeff ], [ satTransmitAnt.no_elements, layout.no_rx ]));
-            % Среденее значение коэффициента передачи
-            averacalcransmissionGain = sum(sum(abs(rawChannelCoeffs) .^ 2))...
-                / (satTransmitAnt.no_elements * layout.no_rx);
+            % Среднее значение коэффициента передачи
+            averageGain = mean(abs(rawChannelCoeffs(:)) .^ 2);
             % Нормированная матрица канала связи
-            this.channelCoeffs = rawChannelCoeffs ./ sqrt(averacalcransmissionGain);
+            this.channelCoeffs = rawChannelCoeffs ./ sqrt(averageGain);
             this.multiuserLayout = layout;
         end % Конец function calcChannelRealization
 
@@ -139,7 +144,7 @@ classdef Beamformer < handle
                 D = repmat(eye(nTransmitAntennas), [ 1 1 this.nUsers ]);
             end
             % Предопределим матрицу под весовые коэффициенты
-            this.beamformerWeights = zeros(size(this.channelCoeffs'));
+            this.beamformerWeights = zeros(size(this.channelCoeffs.'));
             switch this.beamformerMethod
                 case 'MRT'
                     % Расссчитаем весовые коэффициенты матрицы
@@ -198,6 +203,7 @@ classdef Beamformer < handle
         function vuzailizeSpectralPerformance(this)
             % Метод класса, реализующий графическое изображение расчетного случая.
             % Выводятся зависимости спектральной эффективности от ОСШ
+            figure;
             legg = {0};
             for objIdx=1:numel(this)
                 plot(this(objIdx).snrdB, this(objIdx).spectralPerformance);
