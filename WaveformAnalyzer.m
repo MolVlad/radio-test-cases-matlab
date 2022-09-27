@@ -23,8 +23,8 @@ classdef WaveformAnalyzer < handle
     %
     %       rmsEvm            - среднеквадратичное значение модуля вектора ошибки
     %       waveformMeanPower - среднеквадратичное значение мощности сигнала
-    %       channelBandwidth  - ширина полосы канала в дБ
-    %       noiseMeanPower    - среднеквадратичное значение мощности шума в разах
+    %       signalBandwidth   - ширина полосы сигнала в Гц
+    %       noiseMeanPower    - среднеквадратичное значение мощности шума
     %       modulationType    - тип модуляционной схемы
     %       waveformDuration  - длина анализируемого сигнала в секундах
     %
@@ -32,7 +32,7 @@ classdef WaveformAnalyzer < handle
     properties
         rmsEvm
         waveformMeanPower
-        channelBandwidth
+        signalBandwidth
         noiseMeanPower
         modulationType
         waveformDuration
@@ -73,8 +73,29 @@ classdef WaveformAnalyzer < handle
             % Рассчитать среднюю мощность сигнала
             this.waveformMeanPower = mean(abs(this.waveformSource).^2);
             
+            % Получить спектр сигнала
+            spectrum = abs(fftshift(fft(this.waveformSource)));
+            
+            % Посчитать длину сигнала
+            waveformLength = length(this.waveformSource);
+            waveformHalfLength = round(waveformLength / 2);
+            
+            % Разделить спектр на две половины
+            leftSpectrum = spectrum(1:waveformHalfLength);
+            rightSpectrum = spectrum(waveformHalfLength+1:end);
+            
+            % Посчитать порог по уровню -3дБ
+            threshold = db2mag(-3) * sqrt(this.waveformMeanPower);
+            
+            % Найти значения близкие к порогу
+            [~, leftIdx] = min(abs(leftSpectrum - threshold));
+            [~, rightIdx] = min(abs(rightSpectrum - threshold));
+            
+            % Найти ширину спектра в отсчетах
+            spectrumLengthSamples = waveformHalfLength - leftIdx + rightIdx;
+            
             % Рассчитать полосу сигнала
-            this.channelBandwidth = this.sampleRate;
+            this.signalBandwidth = this.sampleRate * spectrumLengthSamples / length(this.waveformSource);
             
             % Распознать тип модуляции
             switch length(unique(this.payloadSymbols))

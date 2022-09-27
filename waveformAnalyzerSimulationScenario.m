@@ -29,7 +29,7 @@ analyzer.calcWaveformParameters();
 
 % Вывести параметры сигнала
 fprintf("Средняя мощность сигнала: %f\n", analyzer.waveformMeanPower);
-fprintf("Полоса сигнала: %f Hz\n", analyzer.channelBandwidth);
+fprintf("Полоса сигнала: %f Hz\n", analyzer.signalBandwidth);
 fprintf("Тип модуляции сигнала: %s\n", analyzer.modulationType);
 fprintf("Длительность сигнала: %f seconds\n", analyzer.waveformDuration);
 
