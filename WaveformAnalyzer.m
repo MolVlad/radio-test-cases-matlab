@@ -36,6 +36,7 @@ classdef WaveformAnalyzer < handle
         noiseMeanPower
         modulationType
         waveformDuration
+        dopplershift
     end
 
     properties (Access = private)
@@ -107,6 +108,10 @@ classdef WaveformAnalyzer < handle
             
             % Рассчитать длительность сигнала
             this.waveformDuration = length(this.waveformSource) / this.sampleRate;
+        end
+
+        function calcdopplerSHift
+
         end
 
         function plotPowerSpectrumDensity(this)
